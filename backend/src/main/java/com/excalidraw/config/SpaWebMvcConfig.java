@@ -28,9 +28,14 @@ public class SpaWebMvcConfig implements WebMvcConfigurer {
                             return null;
                         }
                         Resource requestedResource = location.createRelative(resourcePath);
-                        return (requestedResource.exists() && requestedResource.isReadable())
-                                ? requestedResource
-                                : new ClassPathResource("/static/index.html");
+                        if (requestedResource.exists() && requestedResource.isReadable()) {
+                            return requestedResource;
+                        }
+                        // For missing asset files with extension, return null (404) rather than index.html
+                        if (resourcePath.contains(".")) {
+                            return null;
+                        }
+                        return new ClassPathResource("/static/index.html");
                     }
                 });
     }
