@@ -1,0 +1,36 @@
+# Compiled binaries and target
+target/
+**/target/
+*.class
+
+# Node dependencies and build output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Logs and temporary files
+*.log
+logs/
+.system_generated/
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Vite / NPM caches
+.npm/
+.eslintcache
