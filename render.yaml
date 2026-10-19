@@ -1,11 +1,11 @@
 # Render Blueprint configuration for Excalidraw Full-Stack
 services:
-  # 1. Spring Boot Backend Service
+  # All-in-One Full-Stack Web Service (Spring Boot 3 + React 19 + WebSocket)
   - type: web
-    name: whiteboard-backend
+    name: whiteboard
     runtime: docker
-    dockerContext: ./backend
-    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
     plan: free
     region: oregon
     healthCheckPath: /api/health
@@ -19,17 +19,8 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-  # 2. React + Nginx Frontend Service
-  - type: web
-    name: whiteboard-frontend
-    runtime: docker
-    dockerContext: ./frontend
-    dockerfilePath: ./frontend/Dockerfile
-    plan: free
-    region: oregon
-
 databases:
-  # PostgreSQL Database
+  # Managed PostgreSQL Database
   - name: whiteboard-db
     databaseName: excalidraw
     user: excalidraw
