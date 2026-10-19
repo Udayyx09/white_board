@@ -40,9 +40,24 @@ public class DataSourceConfig {
                 int port = dbUri.getPort() > 0 ? dbUri.getPort() : 5432;
                 String path = dbUri.getPath();
                 String jdbcUrl = "jdbc:postgresql://" + dbUri.getHost() + ":" + port + path;
-                if (dbUri.getQuery() != null) {
+
+                boolean isLocal = dbUri.getHost().equalsIgnoreCase("localhost") 
+                        || dbUri.getHost().equalsIgnoreCase("127.0.0.1") 
+                        || dbUri.getHost().equalsIgnoreCase("postgres");
+
+                if (!isLocal) {
+                    if (dbUri.getQuery() != null && !dbUri.getQuery().isBlank()) {
+                        jdbcUrl += "?" + dbUri.getQuery();
+                        if (!jdbcUrl.contains("sslmode")) {
+                            jdbcUrl += "&sslmode=require";
+                        }
+                    } else {
+                        jdbcUrl += "?sslmode=require";
+                    }
+                } else if (dbUri.getQuery() != null && !dbUri.getQuery().isBlank()) {
                     jdbcUrl += "?" + dbUri.getQuery();
                 }
+
                 properties.setUrl(jdbcUrl);
                 properties.setDriverClassName("org.postgresql.Driver");
             } catch (Exception ignored) {

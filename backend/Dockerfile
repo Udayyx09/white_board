@@ -3,6 +3,8 @@ FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
 WORKDIR /app
 
 # Cache dependencies
+ENV MAVEN_OPTS="-Xmx384m -XX:+UseSerialGC"
+
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
@@ -21,6 +23,7 @@ USER spring:spring
 COPY --from=build /app/target/*.jar app.jar
 
 ENV PORT=8080
+ENV JAVA_OPTS="-Xmx384m -XX:+UseSerialGC"
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]

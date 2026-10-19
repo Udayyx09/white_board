@@ -4,6 +4,8 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
+ENV NODE_OPTIONS="--max-old-space-size=256"
+
 COPY frontend/package*.json ./
 RUN npm ci
 
@@ -16,6 +18,8 @@ RUN npm run build
 FROM maven:3.9.6-eclipse-temurin-21-jammy AS backend-builder
 WORKDIR /app/backend
 
+ENV MAVEN_OPTS="-Xmx384m -XX:+UseSerialGC"
+
 COPY backend/pom.xml .
 RUN mvn dependency:go-offline -B
 
@@ -27,7 +31,7 @@ COPY --from=frontend-builder /app/frontend/dist/ ./src/main/resources/static/
 RUN mvn clean package -DskipTests
 
 # ==========================================
-# Stage 3: Secure Production Runtime
+# Stage 3: Secure Production Runtime (512MB RAM Optimized)
 # ==========================================
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
@@ -38,6 +42,7 @@ USER spring:spring
 COPY --from=backend-builder /app/backend/target/*.jar app.jar
 
 ENV PORT=8080
+ENV JAVA_OPTS="-Xmx384m -XX:+UseSerialGC"
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
