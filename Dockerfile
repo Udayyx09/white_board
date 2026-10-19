@@ -1,48 +1,35 @@
 # ==========================================
-# Stage 1: Build React 19 Frontend
+# Stage 1: Build Spring Boot JAR
+# (Static frontend is pre-bundled in src/main/resources/static)
 # ==========================================
-FROM node:20-alpine AS frontend-builder
-WORKDIR /app/frontend
-
-ENV NODE_OPTIONS="--max-old-space-size=256"
-
-COPY frontend/package*.json ./
-RUN npm ci
-
-COPY frontend/ ./
-RUN npm run build
-
-# ==========================================
-# Stage 2: Build Spring Boot 3 Backend
-# ==========================================
-FROM maven:3.9.6-eclipse-temurin-21-jammy AS backend-builder
-WORKDIR /app/backend
+FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
+WORKDIR /app
 
 ENV MAVEN_OPTS="-Xmx384m -XX:+UseSerialGC"
 
+# Cache Maven dependencies
 COPY backend/pom.xml .
 RUN mvn dependency:go-offline -B
 
+# Copy backend source (includes pre-bundled static frontend)
 COPY backend/src ./src
 
-# Bundle compiled frontend into Spring Boot static assets
-COPY --from=frontend-builder /app/frontend/dist/ ./src/main/resources/static/
-
-RUN mvn clean package -DskipTests
+# Compile & package application with strict memory bounds
+RUN mvn clean package -DskipTests -DargLine="-Xmx384m"
 
 # ==========================================
-# Stage 3: Secure Production Runtime (512MB RAM Optimized)
+# Stage 2: Lightweight Production Runtime
 # ==========================================
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
+# Run as non-root user for security
 RUN groupadd -r spring && useradd -r -g spring spring
 USER spring:spring
 
-COPY --from=backend-builder /app/backend/target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 ENV PORT=8080
-ENV JAVA_OPTS="-Xmx384m -XX:+UseSerialGC"
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Xmx384m -Xms256m -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]

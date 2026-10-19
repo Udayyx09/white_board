@@ -1,6 +1,11 @@
-# Render Blueprint configuration for Excalidraw Full-Stack
+databases:
+  - name: whiteboard-db
+    databaseName: whiteboard
+    user: whiteboard_user
+    plan: free
+    region: oregon
+
 services:
-  # All-in-One Full-Stack Web Service (Spring Boot 3 + React 19 + WebSocket)
   - type: web
     name: whiteboard
     runtime: docker
@@ -10,19 +15,31 @@ services:
     region: oregon
     healthCheckPath: /api/health
     envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-      - key: DATABASE_URL
+      - key: PORT
+        value: 8080
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx384m -Xms256m"
+      - key: DB_HOST
         fromDatabase:
           name: whiteboard-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: whiteboard-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: whiteboard-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: whiteboard-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: whiteboard-db
+          property: password
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
       - key: JWT_SECRET
         generateValue: true
-
-databases:
-  # Managed PostgreSQL Database
-  - name: whiteboard-db
-    databaseName: excalidraw
-    user: excalidraw
-    plan: free
-    region: oregon
